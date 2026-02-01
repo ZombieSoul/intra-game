@@ -1,0 +1,33 @@
+diff --git a/app/openrouter/page.tsx b/app/openrouter/page.tsx
+deleted file mode 100644
+index oldhash..0000000
+--- a/app/openrouter/page.tsx
++++ /dev/null
+@@ -1,25 +0,0 @@
+-'use client';
+-
+-import { useSearchParams } from 'next/navigation';
+-import { useEffect } from 'react';
+-import { openrouterCode } from '../../lib/persistentsignal';
+-
+-export default function OpenRouterCallback() {
+-  const searchParams = useSearchParams();
+-  const code = searchParams.get('code');
+-
+-  useEffect(() => {
+-    if (code) {
+-      fetch('https://openrouter.ai/api/v1/auth/keys', {
+-        method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify({ code }),
+-      })
+-        .then(r => r.json())
+-        .then(json => {
+-          openrouterCode.value = json.key;
+-          setTimeout(() => window.close(), 3000);
+-        });
+-    }
+-  }, [code]);
+-
+-  return <div>Connecting to OpenRouter...</div>;
+-}

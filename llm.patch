@@ -1,0 +1,60 @@
+diff --git a/lib/llm.ts b/lib/llm.ts
+index abc123..def456 100644
+--- a/lib/llm.ts
++++ b/lib/llm.ts
+@@ -1,35 +1,18 @@
+ import OpenAI from 'openai';
+-import { openrouterModel, openrouterCode, settings } from './persistentsignal';
++import { settings } from './persistentsignal';
+
+-let openai: OpenAI | null = null;
++let client: OpenAI | null = null;
+
+-export function getOpenAIClient() {
+-  if (openai) return openai;
++export function getClient() {
++  if (client) return client;
+
+-  let baseURL = 'https://openrouter.ai/api/v1';
+-  let apiKey = openrouterCode.value || process.env.OPENROUTER_API_KEY;
++  if (!settings.apiBaseUrl) {
++    throw new Error("API Base URL not set in settings (e.g. http://127.0.0.1:11434/v1 for Ollama)");
++  }
+
+-  openai = new OpenAI({
+-    baseURL,
+-    apiKey,
++  client = new OpenAI({
++    baseURL: settings.apiBaseUrl,
++    apiKey: settings.apiKey || undefined,
+    dangerouslyAllowBrowser: true,
+  });
+
+-  return openai;
++  return client;
+ }
+
+ export async function generateResponse(messages: any[], options = {}) {
+-  const client = getOpenAIClient();
+-
+-  let model = openrouterModel.value?.id;
+-  if (!model) {
+-    model = 'openai/gpt-4o';
+-    console.warn('No model selected, falling back to openai/gpt-4o');
+-  }
++  const client = getClient();
+
++  const model = settings.model;
++  if (!model) {
++    throw new Error("Model name not set in settings (e.g. cydonia-magnum-22b)");
++  }
+
+  const stream = await client.chat.completions.create({
+    model,
+    messages,
+    stream: true,
+    ...options,
+  });
+
+  return stream;
+ } 

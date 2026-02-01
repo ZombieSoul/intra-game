@@ -1,0 +1,93 @@
+diff --git a/app/api/llm/route.ts b/app/api/llm/route.ts
+index 815dfc6..newhash 100644
+--- a/app/api/llm/route.ts
++++ b/app/api/llm/route.ts
+@@ -1,30 +1,12 @@
+ import { GoogleGenerativeAI } from "@google/generative-ai";
+ import OpenAI from "openai";
+ 
+-export const maxDuration = 60;
++export const maxDuration = 300; // allow longer responses for local models
+ 
+-const generator = new GoogleGenerativeAI(process.env.GEMINI_KEY as string);
+-
+-const openai = new OpenAI({
+-  apiKey: process.env.OPENAI_KEY,
+-});
+-
+-export async function POST(request: Request) {
+-  const data = await request.json();
+-  const { prompt, model, key, openrouter } = data;
+-
+-  if (openrouter || key) {
+-    // OpenRouter path (removed)
+-    return new Response("OpenRouter support removed", { status: 410 });
+-  }
+-
+-  // Keep only generic proxy or remove entirely
+-  // For now, just forward to whatever backend is configured via client-side
+-  return new Response("Use client-side LLM calls", { status: 200 });
++// This route can be deleted or kept as fallback
++// Recommendation: delete app/api/llm/route.ts entirely if client-side calls are used
+ }
+
+diff --git a/lib/llm.ts b/lib/llm.ts
+index abc123..def456 100644
+--- a/lib/llm.ts
++++ b/lib/llm.ts
+@@ -1,35 +1,18 @@
+ import OpenAI from 'openai';
+-import { openrouterModel, openrouterCode, settings } from './persistentsignal';
++import { settings } from './persistentsignal';
+ 
+-let openai: OpenAI | null = null;
++let client: OpenAI | null = null;
+ 
+-export function getOpenAIClient() {
+-  if (openai) return openai;
++export function getClient() {
++  if (client) return client;
+ 
+-  let baseURL = 'https://openrouter.ai/api/v1';
+-  let apiKey = openrouterCode.value || process.env.OPENROUTER_API_KEY;
++  if (!settings.apiBaseUrl) {
++    throw new Error("API Base URL not set in settings (e.g. http://127.0.0.1:11434/v1 for Ollama)");
++  }
+ 
+-  openai = new OpenAI({
+-    baseURL,
+-    apiKey,
++  client = new OpenAI({
++    baseURL: settings.apiBaseUrl,
++    apiKey: settings.apiKey || undefined,
+     dangerouslyAllowBrowser: true,
+   });
+ 
+-  return openai;
++  return client;
+ }
+ 
+ export async function generateResponse(messages: any[], options = {}) {
+-  const client = getOpenAIClient();
+-
+-  let model = openrouterModel.value?.id;
+-  if (!model) {
+-    model = 'openai/gpt-4o';
+-    console.warn('No model selected, falling back to openai/gpt-4o');
+-  }
++  const client = getClient();
+ 
++  const model = settings.model;
++  if (!model) {
++    throw new Error("Model name not set in settings (e.g. cydonia-magnum-22b)");
++  }
+ 
+   const stream = await client.chat.completions.create({
+     model,
+     messages,
+     stream: true,
+     ...options,
+   });
+ 
+   return stream;
+ }

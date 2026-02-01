@@ -1,0 +1,35 @@
+diff --git a/app/application.tsx b/app/application.tsx
+index oldhash..newhash 100644
+--- a/app/application.tsx
++++ b/app/application.tsx
+@@ -10,12 +10,6 @@
+ import {
+   OpenRouterConnect,
+ } from '../components/openrouter';
+
+-// Remove OpenRouter-specific signals and UI
+-import { openrouterModel, openrouterCode } from '../lib/persistentsignal';
+-
+-const openSettings = signal(false);
+-
+ export default function Application() {
+   // Remove OpenRouter connect button and settings overlay
+   // Keep only generic settings if you have them
+@@ -30,11 +24,6 @@
+        {/* Remove OpenRouter connect button */}
+        {/* <OpenRouterConnect /> */}
+
+-        <button onClick={() => openSettings.value = true}>
+-          Settings
+-        </button>
+-
+-        {openSettings.value && (
+-          <ZoomOverlay onClose={() => openSettings.value = false}>
+-            <Settings />
+-          </ZoomOverlay>
+-        )}
++        {/* Add your own settings UI here if needed, or remove entirely */}
+      </div>
+    </div>
+  );
+}
